@@ -1,4 +1,4 @@
-package ARS_Projekat
+package main
 
 import "fmt"
 
