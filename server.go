@@ -6,17 +6,17 @@ import (
 	"net/http"
 )
 
-type postServer struct {
-	data map[string][]*Config
+type Service struct {
+	data map[string][]*Config //this is currently a database
 }
 
-func (ts *postServer) createPostHandler() {}
+func (ts *Service) createConfigHandler() {}
 
-func (ts *postServer) getAllHandler() {}
+func (ts *Service) getAllConfigHandler() {}
 
-func (ts *postServer) getPostHandler() {}
+func (ts *Service) getConfigHandler() {}
 
-func (ts *postServer) delPostHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	if v, ok := ts.data[id]; ok {
 		delete(ts.data, id)
