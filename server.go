@@ -48,7 +48,16 @@ func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request)
 	renderJSON(w, allTasks)
 }
 
-func (ts *Service) getConfigHandler() {}
+func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	task, ok := ts.data[id]
+	if !ok {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	renderJSON(w, task)
+}
 
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
