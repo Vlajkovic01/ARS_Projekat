@@ -34,7 +34,10 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	id := createId()
-	rt.Entries["id"] = id
+	rt.Id = createId()
+	for i := 0; i < len(rt.Entries); i++ {
+		rt.Entries[i]["id"] = createId()
+	}
 	ts.data[id] = append(ts.data[id], rt)
 	renderJSON(w, rt)
 }
