@@ -28,18 +28,14 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	rt, err := decodeBody(req.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if err != nil || len(rt) > 1 {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
 	id := createId()
-	rt.Id = createId()
-	for i := 0; i < len(rt.Entries); i++ {
-		rt.Entries[i]["id"] = createId()
-	}
-	ts.data[id] = append(ts.data[id], rt)
-	renderJSON(w, rt)
+	ts.data[id] = rt
+	w.Write([]byte(id))
 }
 
 func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
@@ -51,7 +47,15 @@ func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request)
 	renderJSON(w, allTasks)
 }
 
-func (ts *Service) getConfigHandler() {}
+func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	task, ok := ts.data[id]
+	if !ok || len(task) > 1 {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+	renderJSON(w, task)
+}
 
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]

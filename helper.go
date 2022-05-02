@@ -7,15 +7,15 @@ import (
 	"net/http"
 )
 
-func decodeBody(r io.Reader) (*Config, error) {
+func decodeBody(r io.Reader) ([]*Config, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var rt Config
+	var rt []*Config
 	if err := dec.Decode(&rt); err != nil {
 		return nil, err
 	}
-	return &rt, nil
+	return rt, nil
 }
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
