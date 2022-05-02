@@ -39,11 +39,12 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 }
 
 func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*Config{}
+	allTasks := [][]*Config{}
 	for _, v := range ts.data {
-		allTasks = append(allTasks, v...)
+		if len(v) > 1 {
+			allTasks = append(allTasks, v)
+		}
 	}
-
 	renderJSON(w, allTasks)
 }
 
