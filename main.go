@@ -22,6 +22,7 @@ func main() {
 		data: map[string][]*Config{},
 	}
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
+	router.HandleFunc("/configs/", server.createConfigGroupHandler).Methods("POST")
 	router.HandleFunc("/configs/", server.getAllConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.deleteConfigHandler).Methods("DELETE")

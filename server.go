@@ -11,6 +11,29 @@ type Service struct {
 	data map[string][]*Config //this is currently a database
 }
 
+func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mediatype != "application/json" {
+		err := errors.New("Expect application/json Content-Type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	rt, err := decodeBody(req.Body)
+	if err != nil || len(rt) == 1 {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	id := createId()
+	ts.data[id] = rt
+}
 func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 
 	contentType := req.Header.Get("Content-Type")
