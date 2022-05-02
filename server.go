@@ -33,6 +33,7 @@ func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Req
 	}
 	id := createId()
 	ts.data[id] = rt
+	renderJSON(w, ts.data)
 }
 func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 
@@ -58,7 +59,7 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 
 	id := createId()
 	ts.data[id] = rt
-	w.Write([]byte(id))
+	renderJSON(w, ts.data)
 }
 
 func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
