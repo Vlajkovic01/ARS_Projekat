@@ -23,10 +23,11 @@ func main() {
 	}
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	router.HandleFunc("/configs/", server.createConfigGroupHandler).Methods("POST")
-	router.HandleFunc("/configs/", server.getAllConfigHandler).Methods("GET")
+	router.HandleFunc("/configs/", server.getAllConfigAndGroupHandler).Methods("GET") //not requested but implemented
 	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/", server.deleteConfigHandler).Methods("DELETE")
+	router.HandleFunc("/configs/{id}/", server.getConfigGroupHandler).Methods("GET")
 	router.HandleFunc("/configs/{id}/", server.putConfigHandler).Methods("PUT")
+	router.HandleFunc("/config/{id}/", server.deleteConfigAndGroupHandler).Methods("DELETE")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

@@ -61,7 +61,7 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	renderJSON(w, ts.data)
 }
 
-func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) getAllConfigAndGroupHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(w, ts.data)
 }
 
@@ -71,11 +71,23 @@ func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	if !ok || len(task) > 1 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 	renderJSON(w, ts.data[id])
 }
 
-func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) getConfigGroupHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	task, ok := ts.data[id]
+	if !ok || len(task) < 2 {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	renderJSON(w, ts.data[id])
+}
+
+func (ts *Service) deleteConfigAndGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	if v, ok := ts.data[id]; ok {
 		delete(ts.data, id)
@@ -92,6 +104,7 @@ func (ts *Service) putConfigHandler(w http.ResponseWriter, req *http.Request) {
 	if !ok {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
 	rt, err := decodeBody(req.Body)
@@ -100,4 +113,5 @@ func (ts *Service) putConfigHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ts.data[id] = append(ts.data[id], rt...)
+	renderJSON(w, ts.data[id])
 }
