@@ -1,0 +1,68 @@
+create config
+
+POST localhost:8000/config/
+
+[
+    {
+        "entries": {
+            "test": "test"
+        }
+    }
+]
+
+===============================
+
+create configs (config group)
+
+POST localhost:8000/configs/
+
+[
+    {
+        "entries": {
+            "test": "test"
+        }
+    },
+    {
+        "entries": {
+            "test1": "test1"
+        }
+    }
+]
+
+===============================
+
+get all configs (single and group)
+
+GET localhost:8000/configs/
+
+===============================
+
+get single config
+
+GET localhost:8000/config/5c892b5-9828-418f-9591-d5e2e815efd9/
+
+===============================
+
+get config group (configs)
+
+GET localhost:8000/configs/5c892b5-9828-418f-9591-d5e2e815efd9/
+
+===============================
+
+put new config into config group
+
+PUT localhost:8000/configs/5c892b5-9828-418f-9591-d5e2e815efd9/
+
+[
+    {
+        "entries": {
+            "test": "put_test"
+        }
+    }
+]
+
+===============================
+
+delete config or config group
+
+DELETE localhost:8000/config/5c892b5-9828-418f-9591-d5e2e815efd9/
