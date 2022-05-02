@@ -56,20 +56,13 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-
 	id := createId()
 	ts.data[id] = rt
 	renderJSON(w, ts.data)
 }
 
 func (ts *Service) getAllConfigHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := [][]*Config{}
-	for _, v := range ts.data {
-		if len(v) > 1 {
-			allTasks = append(allTasks, v)
-		}
-	}
-	renderJSON(w, allTasks)
+	renderJSON(w, ts.data)
 }
 
 func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
@@ -79,7 +72,7 @@ func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
 	}
-	renderJSON(w, task)
+	renderJSON(w, ts.data[id])
 }
 
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
