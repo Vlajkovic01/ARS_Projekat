@@ -85,3 +85,19 @@ func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request)
 		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 }
+
+func (ts *Service) putConfigHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	_, ok := ts.data[id]
+	if !ok {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+
+	rt, err := decodeBody(req.Body)
+	if err != nil || len(rt) < 1 {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	ts.data[id] = append(ts.data[id], rt...)
+}

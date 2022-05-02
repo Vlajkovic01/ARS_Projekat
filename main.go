@@ -26,6 +26,7 @@ func main() {
 	router.HandleFunc("/configs/", server.getAllConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.deleteConfigHandler).Methods("DELETE")
+	router.HandleFunc("/configs/{id}/", server.putConfigHandler).Methods("PUT")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
