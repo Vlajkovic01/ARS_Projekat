@@ -22,12 +22,16 @@ func main() {
 		data: map[string][]*Config{},
 	}
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
-	router.HandleFunc("/configs/", server.createConfigGroupHandler).Methods("POST")
-	router.HandleFunc("/configs/", server.getAllConfigAndGroupHandler).Methods("GET") //not requested but implemented
+	router.HandleFunc("/group/", server.createConfigGroupHandler).Methods("POST")
+	router.HandleFunc("/configs/", server.getAllConfigsHandler).Methods("GET")
+	router.HandleFunc("/groups/", server.getAllGroupsHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/configs/{id}/", server.getConfigGroupHandler).Methods("GET")
-	router.HandleFunc("/configs/{id}/", server.putConfigHandler).Methods("PUT")
-	router.HandleFunc("/config/{id}/", server.deleteConfigAndGroupHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/config/{idConfig}/", server.getConfigFromGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/", server.putConfigHandler).Methods("PUT")
+	router.HandleFunc("/config/{id}/", server.deleteConfigHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/", server.deleteGroupHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/config/{idConfig}/", server.deleteConfigFromGroupHandler).Methods("DELETE")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
