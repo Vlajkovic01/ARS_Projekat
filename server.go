@@ -28,7 +28,7 @@ func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Req
 
 	rt, err := decodeBody(req.Body)
 	if err != nil || len(rt) == 1 {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON format. Must be more than 1 config.", http.StatusBadRequest)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Req
 
 	id := createId()
 	ts.data[id] = rt
-	renderJSON(w, ts.data)
+	renderJSON(w, id)
 }
 func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 
@@ -58,7 +58,7 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 
 	rt, err := decodeBody(req.Body)
 	if err != nil || len(rt) > 1 {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON format. Must be exactly 1 config.", http.StatusBadRequest)
 		return
 	}
 
@@ -68,14 +68,14 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	ts.data[id] = append(ts.data[id], rt...)
-	renderJSON(w, rt)
+	renderJSON(w, id)
 }
 
 func (ts *Service) getAllConfigsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*Config{}
+	allTasks := [][]*Config{}
 	for _, v := range ts.data {
 		if len(v) < 2 {
-			allTasks = append(allTasks, v...)
+			allTasks = append(allTasks, v)
 		}
 	}
 
@@ -83,10 +83,10 @@ func (ts *Service) getAllConfigsHandler(w http.ResponseWriter, req *http.Request
 }
 
 func (ts *Service) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := []*Config{}
-	for _, v := range ts.data {
+	allTasks := make(map[string][]*Config)
+	for k, v := range ts.data {
 		if len(v) >= 2 {
-			allTasks = append(allTasks, v...)
+			allTasks[k] = v
 		}
 	}
 
@@ -101,7 +101,7 @@ func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	renderJSON(w, ts.data[id])
+	renderJSON(w, task)
 }
 
 func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
@@ -112,11 +112,11 @@ func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	renderJSON(w, ts.data[id])
+	renderJSON(w, task)
 }
 
 func (ts *Service) getConfigFromGroupHandler(w http.ResponseWriter, req *http.Request) {
-	idGroup := mux.Vars(req)["id"]
+	idGroup := mux.Vars(req)["idGroup"]
 	idConfig := mux.Vars(req)["idConfig"]
 
 	group, ok := ts.data[idGroup]
@@ -130,6 +130,7 @@ func (ts *Service) getConfigFromGroupHandler(w http.ResponseWriter, req *http.Re
 	for _, v := range group {
 		if v.Entries["id"] == idConfig {
 			renderJSON(w, v)
+			return
 		}
 	}
 }
@@ -137,6 +138,7 @@ func (ts *Service) getConfigFromGroupHandler(w http.ResponseWriter, req *http.Re
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	config, ok := ts.data[id]
+
 	if !ok || len(config) > 1 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -149,6 +151,7 @@ func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request)
 func (ts *Service) deleteGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	group, ok := ts.data[id]
+
 	if !ok || len(group) < 2 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -159,7 +162,7 @@ func (ts *Service) deleteGroupHandler(w http.ResponseWriter, req *http.Request) 
 }
 
 func (ts *Service) deleteConfigFromGroupHandler(w http.ResponseWriter, req *http.Request) {
-	idGroup := mux.Vars(req)["id"]
+	idGroup := mux.Vars(req)["idGroup"]
 	idConfig := mux.Vars(req)["idConfig"]
 
 	group, ok := ts.data[idGroup]
@@ -167,13 +170,13 @@ func (ts *Service) deleteConfigFromGroupHandler(w http.ResponseWriter, req *http
 	if !ok || len(group) < 2 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
-	} else {
-		renderJSON(w, group)
-		for _, v := range group {
-			if v.Entries["id"] == idConfig {
-				delete(ts.data, idConfig)
-				renderJSON(w, v)
-			}
+		return
+	}
+
+	for _, v := range group {
+		if v.Entries["id"] == idConfig {
+			delete(ts.data, idConfig)
+			renderJSON(w, group)
 		}
 	}
 }
