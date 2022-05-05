@@ -12,9 +12,9 @@ POST localhost:8000/config/
 
 ===============================
 
-create configs (config group)
+create group
 
-POST localhost:8000/configs/
+POST localhost:8000/group/
 
 [
     {
@@ -31,9 +31,15 @@ POST localhost:8000/configs/
 
 ===============================
 
-get all configs (single and group)
+get all configs (single)
 
 GET localhost:8000/configs/
+
+===============================
+
+get all groups
+
+GET localhost:8000/groups/
 
 ===============================
 
@@ -45,13 +51,19 @@ GET localhost:8000/config/5c892b5-9828-418f-9591-d5e2e815efd9/
 
 get config group (configs)
 
-GET localhost:8000/configs/5c892b5-9828-418f-9591-d5e2e815efd9/
+GET localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
+
+===============================
+
+get config from group
+
+GET localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/config/5c892b5-9828-418f-9591-d5e2e815efd9/
 
 ===============================
 
 put new config into config group
 
-PUT localhost:8000/configs/5c892b5-9828-418f-9591-d5e2e815efd9/
+PUT localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
 
 [
     {
@@ -63,6 +75,18 @@ PUT localhost:8000/configs/5c892b5-9828-418f-9591-d5e2e815efd9/
 
 ===============================
 
-delete config or config group
+delete single config
 
 DELETE localhost:8000/config/5c892b5-9828-418f-9591-d5e2e815efd9/
+
+===============================
+
+delete group
+
+DELETE localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
+
+===============================
+
+delete config from group
+
+DELETE localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/config/5c892b5-9828-418f-9591-d5e2e815efd9/
