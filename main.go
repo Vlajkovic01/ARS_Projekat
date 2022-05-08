@@ -27,11 +27,9 @@ func main() {
 	router.HandleFunc("/groups/", server.getAllGroupsHandler).Methods("GET")
 	router.HandleFunc("/config/{id}/", server.getConfigHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{idGroup}/config/{idConfig}/", server.getConfigFromGroupHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/", server.putConfigHandler).Methods("PUT")
 	router.HandleFunc("/config/{id}/", server.deleteConfigHandler).Methods("DELETE")
 	router.HandleFunc("/group/{id}/", server.deleteGroupHandler).Methods("DELETE")
-	router.HandleFunc("/group/{idGroup}/config/{idConfig}/", server.deleteConfigFromGroupHandler).Methods("DELETE")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

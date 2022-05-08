@@ -32,11 +32,11 @@ func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Req
 		return
 	}
 
-	for _, v := range rt {
-		v.Entries["id"] = createId()
-	}
-
 	id := createId()
+	if _, exists := ts.data[id]; exists {
+		http.Error(w, "The same request has already been sent.", http.StatusBadRequest)
+		return
+	}
 	ts.data[id] = rt
 	renderJSON(w, id)
 }
@@ -63,11 +63,11 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	id := createId()
-	for _, v := range rt {
-		v.Entries["id"] = id
+	if _, exists := ts.data[id]; exists {
+		http.Error(w, "The same request has already been sent.", http.StatusBadRequest)
+		return
 	}
-
-	ts.data[id] = append(ts.data[id], rt...)
+	ts.data[id] = rt
 	renderJSON(w, id)
 }
 
@@ -115,26 +115,6 @@ func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(w, task)
 }
 
-func (ts *Service) getConfigFromGroupHandler(w http.ResponseWriter, req *http.Request) {
-	idGroup := mux.Vars(req)["idGroup"]
-	idConfig := mux.Vars(req)["idConfig"]
-
-	group, ok := ts.data[idGroup]
-
-	if !ok || len(group) < 2 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	for _, v := range group {
-		if v.Entries["id"] == idConfig {
-			renderJSON(w, v)
-			return
-		}
-	}
-}
-
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	config, ok := ts.data[id]
@@ -161,26 +141,6 @@ func (ts *Service) deleteGroupHandler(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
-func (ts *Service) deleteConfigFromGroupHandler(w http.ResponseWriter, req *http.Request) {
-	idGroup := mux.Vars(req)["idGroup"]
-	idConfig := mux.Vars(req)["idConfig"]
-
-	group, ok := ts.data[idGroup]
-
-	if !ok || len(group) < 2 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	for _, v := range group {
-		if v.Entries["id"] == idConfig {
-			delete(ts.data, idConfig)
-			renderJSON(w, group)
-		}
-	}
-}
-
 func (ts *Service) putConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	group, ok := ts.data[id]
@@ -194,10 +154,6 @@ func (ts *Service) putConfigHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil || len(rt) < 1 {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
-	}
-
-	for _, v := range rt {
-		v.Entries["id"] = createId()
 	}
 
 	ts.data[id] = append(ts.data[id], rt...)
