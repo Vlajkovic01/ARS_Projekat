@@ -72,10 +72,10 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 }
 
 func (ts *Service) getAllConfigsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := [][]*Config{}
-	for _, v := range ts.data {
+	allTasks := make(map[string][]*Config)
+	for k, v := range ts.data {
 		if len(v) < 2 {
-			allTasks = append(allTasks, v)
+			allTasks[k] = v
 		}
 	}
 
