@@ -95,22 +95,42 @@ func (ts *Service) getAllGroupsHandler(w http.ResponseWriter, req *http.Request)
 
 func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	task, ok := ts.data[id]
+
 	if !ok || len(task) > 1 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
+	}
+	if ok {
+		for _, v := range task {
+			if v.Version != version {
+				err := errors.New("version not found")
+				http.Error(w, err.Error(), http.StatusNotFound)
+			}
+		}
 	}
 	renderJSON(w, task)
 }
 
 func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	task, ok := ts.data[id]
 	if !ok || len(task) < 2 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
+	}
+
+	if ok {
+		for _, v := range task {
+			if v.Version != version {
+				err := errors.New("version not found")
+				http.Error(w, err.Error(), http.StatusNotFound)
+			}
+		}
 	}
 	renderJSON(w, task)
 }
