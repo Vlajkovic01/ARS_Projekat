@@ -1,17 +1,18 @@
 package main
 
 import (
+	"ARS_Projekat/configstore"
 	"encoding/json"
 	"github.com/google/uuid"
 	"io"
 	"net/http"
 )
 
-func decodeBody(r io.Reader) ([]*Config, error) {
+func decodeBody(r io.Reader) ([]*configstore.Config, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var rt []*Config
+	var rt []*configstore.Config
 	if err := dec.Decode(&rt); err != nil {
 		return nil, err
 	}

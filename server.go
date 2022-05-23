@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ARS_Projekat/configstore"
 	"errors"
 	"github.com/gorilla/mux"
 	"mime"
@@ -8,7 +9,7 @@ import (
 )
 
 type Service struct {
-	data map[string][]*Config //this is currently a database
+	data map[string][]*configstore.Config //this is currently a database
 }
 
 func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Request) {
@@ -40,6 +41,61 @@ func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Req
 	ts.data[id] = rt
 	renderJSON(w, id)
 }
+
+func (ts *Service) createConfigGroupNewVersionHandler(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mediatype != "application/json" {
+		err := errors.New("Expect application/json Content-Type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	rt, err := decodeBody(req.Body)
+	if err != nil || len(rt) == 1 {
+		http.Error(w, "Invalid JSON format. Must be more than 1 config.", http.StatusBadRequest)
+		return
+	}
+
+	id := mux.Vars(req)["id"]
+	renderJSON(w, id)
+}
+
+func (ts *Service) createConfigNewVersionHandler(w http.ResponseWriter, req *http.Request) {
+
+	contentType := req.Header.Get("Content-Type")
+
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mediatype != "application/json" {
+		err := errors.New("Expect application/json Content-Type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	rt, err := decodeBody(req.Body)
+	if err != nil || len(rt) > 1 {
+		http.Error(w, "Invalid JSON format. Must be exactly 1 config.", http.StatusBadRequest)
+		return
+	}
+
+	id := mux.Vars(req)["id"]
+	task := ts.data[id]
+	task = append(task, rt...)
+	ts.data[id] = task
+	renderJSON(w, id)
+}
+
 func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request) {
 
 	contentType := req.Header.Get("Content-Type")
@@ -72,7 +128,7 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 }
 
 func (ts *Service) getAllConfigsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := make(map[string][]*Config)
+	allTasks := make(map[string][]*configstore.Config)
 	for k, v := range ts.data {
 		if len(v) < 2 {
 			allTasks[k] = v
@@ -83,7 +139,7 @@ func (ts *Service) getAllConfigsHandler(w http.ResponseWriter, req *http.Request
 }
 
 func (ts *Service) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := make(map[string][]*Config)
+	allTasks := make(map[string][]*configstore.Config)
 	for k, v := range ts.data {
 		if len(v) >= 2 {
 			allTasks[k] = v
@@ -108,6 +164,7 @@ func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 			if v.Version != version {
 				err := errors.New("version not found")
 				http.Error(w, err.Error(), http.StatusNotFound)
+				return
 			}
 		}
 	}
@@ -129,6 +186,7 @@ func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 			if v.Version != version {
 				err := errors.New("version not found")
 				http.Error(w, err.Error(), http.StatusNotFound)
+				return
 			}
 		}
 	}
@@ -137,15 +195,27 @@ func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
+	version := mux.Vars(req)["version"]
 	config, ok := ts.data[id]
 
 	if !ok || len(config) > 1 {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
-	} else {
-		delete(ts.data, id)
-		renderJSON(w, config)
+		return
 	}
+
+	if ok {
+		for _, v := range config {
+			if v.Version != version {
+				err := errors.New("version not found")
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+		}
+	}
+
+	delete(ts.data, id)
+	renderJSON(w, config)
 }
 
 func (ts *Service) deleteGroupHandler(w http.ResponseWriter, req *http.Request) {

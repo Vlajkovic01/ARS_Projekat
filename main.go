@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ARS_Projekat/configstore"
 	"context"
 	"github.com/gorilla/mux"
 	"log"
@@ -19,10 +20,12 @@ func main() {
 	router.StrictSlash(true)
 
 	server := Service{
-		data: map[string][]*Config{},
+		data: map[string][]*configstore.Config{},
 	}
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	router.HandleFunc("/group/", server.createConfigGroupHandler).Methods("POST")
+	router.HandleFunc("/config/{id}/", server.createConfigNewVersionHandler).Methods("POST")
+	router.HandleFunc("/group/{id}/", server.createConfigGroupNewVersionHandler).Methods("POST")
 	router.HandleFunc("/configs/", server.getAllConfigsHandler).Methods("GET")
 	router.HandleFunc("/groups/", server.getAllGroupsHandler).Methods("GET")
 	router.HandleFunc("/config/{version}/{id}", server.getConfigHandler).Methods("GET")
