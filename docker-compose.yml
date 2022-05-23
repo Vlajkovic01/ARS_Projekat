@@ -8,7 +8,7 @@ services:
       - "8600:8600/udp"
     command: "agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0"
     volumes:
-      - /home/GolandProjects/consul/:/consul/data
+      - ./consul/:/consul/data
   app:
     build: .
     restart: always

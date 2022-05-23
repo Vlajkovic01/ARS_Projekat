@@ -1,105 +1,21 @@
 package main
 
 import (
-	"ARS_Projekat/configstore"
+	cs "ARS_Projekat/configstore"
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
+	"log"
 	"mime"
 	"net/http"
 )
 
 type Service struct {
-	data map[string][]*configstore.Config //this is currently a database
-}
-
-func (ts *Service) createConfigGroupHandler(w http.ResponseWriter, req *http.Request) {
-	contentType := req.Header.Get("Content-Type")
-
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if mediatype != "application/json" {
-		err := errors.New("Expect application/json Content-Type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
-
-	rt, err := decodeBody(req.Body)
-	if err != nil || len(rt) == 1 {
-		http.Error(w, "Invalid JSON format. Must be more than 1 config.", http.StatusBadRequest)
-		return
-	}
-
-	id := createId()
-	if _, exists := ts.data[id]; exists {
-		http.Error(w, "The same request has already been sent.", http.StatusBadRequest)
-		return
-	}
-	ts.data[id] = rt
-	renderJSON(w, id)
-}
-
-func (ts *Service) createConfigGroupNewVersionHandler(w http.ResponseWriter, req *http.Request) {
-	contentType := req.Header.Get("Content-Type")
-
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if mediatype != "application/json" {
-		err := errors.New("Expect application/json Content-Type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
-
-	rt, err := decodeBody(req.Body)
-	if err != nil || len(rt) == 1 {
-		http.Error(w, "Invalid JSON format. Must be more than 1 config.", http.StatusBadRequest)
-		return
-	}
-
-	id := mux.Vars(req)["id"]
-	renderJSON(w, id)
-}
-
-func (ts *Service) createConfigNewVersionHandler(w http.ResponseWriter, req *http.Request) {
-
-	contentType := req.Header.Get("Content-Type")
-
-	mediatype, _, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if mediatype != "application/json" {
-		err := errors.New("Expect application/json Content-Type")
-		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
-		return
-	}
-
-	rt, err := decodeBody(req.Body)
-	if err != nil || len(rt) > 1 {
-		http.Error(w, "Invalid JSON format. Must be exactly 1 config.", http.StatusBadRequest)
-		return
-	}
-
-	id := mux.Vars(req)["id"]
-	task := ts.data[id]
-	task = append(task, rt...)
-	ts.data[id] = task
-	renderJSON(w, id)
+	store *cs.ConfigStore
 }
 
 func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request) {
-
 	contentType := req.Header.Get("Content-Type")
-
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -112,140 +28,191 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	rt, err := decodeBody(req.Body)
-	if err != nil || len(rt) > 1 {
-		http.Error(w, "Invalid JSON format. Must be exactly 1 config.", http.StatusBadRequest)
-		return
-	}
-
-	id := createId()
-	if _, exists := ts.data[id]; exists {
-		http.Error(w, "The same request has already been sent.", http.StatusBadRequest)
-		return
-	}
-	ts.data[id] = rt
-	renderJSON(w, id)
-}
-
-func (ts *Service) getAllConfigsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := make(map[string][]*configstore.Config)
-	for k, v := range ts.data {
-		if len(v) < 2 {
-			allTasks[k] = v
-		}
-	}
-
-	renderJSON(w, allTasks)
-}
-
-func (ts *Service) getAllGroupsHandler(w http.ResponseWriter, req *http.Request) {
-	allTasks := make(map[string][]*configstore.Config)
-	for k, v := range ts.data {
-		if len(v) >= 2 {
-			allTasks[k] = v
-		}
-	}
-
-	renderJSON(w, allTasks)
-}
-
-func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	task, ok := ts.data[id]
-
-	if !ok || len(task) > 1 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-	if ok {
-		for _, v := range task {
-			if v.Version != version {
-				err := errors.New("version not found")
-				http.Error(w, err.Error(), http.StatusNotFound)
-				return
-			}
-		}
-	}
-	renderJSON(w, task)
-}
-
-func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	task, ok := ts.data[id]
-	if !ok || len(task) < 2 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	if ok {
-		for _, v := range task {
-			if v.Version != version {
-				err := errors.New("version not found")
-				http.Error(w, err.Error(), http.StatusNotFound)
-				return
-			}
-		}
-	}
-	renderJSON(w, task)
-}
-
-func (ts *Service) deleteConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	version := mux.Vars(req)["version"]
-	config, ok := ts.data[id]
-
-	if !ok || len(config) > 1 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	if ok {
-		for _, v := range config {
-			if v.Version != version {
-				err := errors.New("version not found")
-				http.Error(w, err.Error(), http.StatusNotFound)
-				return
-			}
-		}
-	}
-
-	delete(ts.data, id)
-	renderJSON(w, config)
-}
-
-func (ts *Service) deleteGroupHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	group, ok := ts.data[id]
-
-	if !ok || len(group) < 2 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-	} else {
-		delete(ts.data, id)
-		renderJSON(w, group)
-	}
-}
-
-func (ts *Service) putConfigHandler(w http.ResponseWriter, req *http.Request) {
-	id := mux.Vars(req)["id"]
-	group, ok := ts.data[id]
-	if !ok || len(group) < 2 {
-		err := errors.New("key not found")
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	rt, err := decodeBody(req.Body)
-	if err != nil || len(rt) < 1 {
+	rt, err := decodeConfigBody(req.Body)
+	if err != nil || rt.Version == "" || rt.Entries == nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
-	ts.data[id] = append(ts.data[id], rt...)
-	renderJSON(w, ts.data[id])
+	config, err := ts.store.CreateConfig(rt)
+	log.Default().Println(config)
+	w.Write([]byte(config.ID))
+}
+
+func (ts *Service) putNewVersion(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	id := mux.Vars(req)["id"]
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mediatype != "application/json" {
+		err := errors.New("Expect application/json Content-Type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	rt, err := decodeConfigBody(req.Body)
+	if err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	rt.ID = id
+	config, err := ts.store.UpdateConfigVersion(rt)
+
+	if err != nil {
+		http.Error(w, "Given config version already exists! ", http.StatusBadRequest)
+		return
+	}
+
+	w.Write([]byte(config.ID))
+}
+
+func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
+	ver := mux.Vars(req)["ver"]
+	id := mux.Vars(req)["id"]
+	task, ok := ts.store.FindConf(id, ver)
+	if ok != nil {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	renderJSON(w, task)
+}
+
+func (ts *Service) getConfigVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	task, ok := ts.store.FindConfVersions(id)
+	if ok != nil {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	renderJSON(w, task)
+}
+
+func (ts *Service) createGroupHandler(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mediatype != "application/json" {
+		err := errors.New("Expect application/json Content-Type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	rt, err := decodeGroupBody(req.Body)
+	if err != nil || rt.Version == "" || rt.Configs == nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	group, err := ts.store.CreateGroup(rt)
+
+	w.Write([]byte(group.ID))
+}
+
+func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
+	ver := mux.Vars(req)["ver"]
+	id := mux.Vars(req)["id"]
+	task, ok := ts.store.FindGroup(id, ver)
+	if ok != nil {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	renderJSON(w, task)
+}
+
+func (ts *Service) getGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	task, ok := ts.store.FindGroupVersions(id)
+	if ok != nil {
+		err := errors.New("key not found")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	renderJSON(w, task)
+}
+
+func (ts *Service) putNewGroupVersion(w http.ResponseWriter, req *http.Request) {
+	contentType := req.Header.Get("Content-Type")
+	mediatype, _, err := mime.ParseMediaType(contentType)
+	id := mux.Vars(req)["id"]
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mediatype != "application/json" {
+		err := errors.New("Expect application/json Content-Type")
+		http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	rt, err := decodeGroupBody(req.Body)
+	if err != nil || rt.Version == "" || rt.Configs == nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	rt.ID = id
+	config, err := ts.store.UpdateGroupVersion(rt)
+
+	if err != nil {
+		http.Error(w, "Given config version already exists! ", http.StatusBadRequest)
+		return
+	}
+
+	w.Write([]byte(config.ID))
+}
+
+func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+
+	id := mux.Vars(req)["id"]
+
+	ver := mux.Vars(req)["ver"]
+
+	msg, err := ts.store.DeleteConfig(id, ver)
+
+	fmt.Println("CONFIG ", msg, err)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	renderJSON(w, msg)
+
+}
+
+func (ts *Service) delGroupHandler(w http.ResponseWriter, req *http.Request) {
+
+	id := mux.Vars(req)["id"]
+
+	ver := mux.Vars(req)["ver"]
+
+	msg, err := ts.store.DeleteConfigGroup(id, ver)
+
+	fmt.Println("GROUP ", msg, err)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	renderJSON(w, msg)
 }

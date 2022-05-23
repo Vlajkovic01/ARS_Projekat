@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ARS_Projekat/configstore"
+	cs "ARS_Projekat/configstore"
 	"context"
 	"github.com/gorilla/mux"
 	"log"
@@ -19,20 +19,26 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	server := Service{
-		data: map[string][]*configstore.Config{},
+	store, err := cs.New()
+
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	server := Service{
+		store: store,
+	}
+
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
-	router.HandleFunc("/group/", server.createConfigGroupHandler).Methods("POST")
-	router.HandleFunc("/config/{id}/", server.createConfigNewVersionHandler).Methods("POST")
-	router.HandleFunc("/group/{id}/", server.createConfigGroupNewVersionHandler).Methods("POST")
-	router.HandleFunc("/configs/", server.getAllConfigsHandler).Methods("GET")
-	router.HandleFunc("/groups/", server.getAllGroupsHandler).Methods("GET")
-	router.HandleFunc("/config/{version}/{id}", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/", server.putConfigHandler).Methods("PUT")
-	router.HandleFunc("/config/{id}/", server.deleteConfigHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/", server.deleteGroupHandler).Methods("DELETE")
+	router.HandleFunc("/config/{id}/", server.getConfigVersionsHandler).Methods("GET")
+	router.HandleFunc("/config/{id}", server.putNewVersion).Methods("POST")
+	router.HandleFunc("/config/{id}/{ver}", server.getConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/{ver}", server.delConfigHandler).Methods("DELETE")
+	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
+	router.HandleFunc("/group/{id}", server.putNewGroupVersion).Methods("POST")
+	router.HandleFunc("/group/{id}/", server.getGroupVersionsHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{ver}/", server.getGroupHandler).Methods("GET")
+	router.HandleFunc("/group/{id}/{ver}", server.delGroupHandler).Methods("DELETE")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

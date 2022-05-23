@@ -1,22 +1,33 @@
 package main
 
 import (
-	"ARS_Projekat/configstore"
+	cs "ARS_Projekat/configstore"
 	"encoding/json"
 	"github.com/google/uuid"
 	"io"
 	"net/http"
 )
 
-func decodeBody(r io.Reader) ([]*configstore.Config, error) {
+func decodeConfigBody(r io.Reader) (*cs.Config, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
-	var rt []*configstore.Config
-	if err := dec.Decode(&rt); err != nil {
+	var config *cs.Config
+	if err := dec.Decode(&config); err != nil {
 		return nil, err
 	}
-	return rt, nil
+	return config, nil
+}
+
+func decodeGroupBody(r io.Reader) (*cs.Group, error) {
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+
+	var group *cs.Group
+	if err := dec.Decode(&group); err != nil {
+		return nil, err
+	}
+	return group, nil
 }
 
 func renderJSON(w http.ResponseWriter, v interface{}) {
