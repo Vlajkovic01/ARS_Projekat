@@ -7,12 +7,9 @@ import (
 )
 
 const (
-	allConfigs = "config"
-	configId   = "config/%s"
-	config     = "config/%s/%s"
+	configId = "config/%s"
+	config   = "config/%s/%s"
 
-	allGroups      = "group"
-	groupId        = "group/%s"
 	groupVer       = "group/%s/%s"
 	group          = "group/%s/%s/%s"
 	groupWithLabel = "group/%s/%s/%s/%s"
@@ -38,10 +35,6 @@ func generateGroupKey(ver string) (string, string) {
 
 func constructGroupKey(id string, ver string) string {
 	return fmt.Sprintf(groupVer, id, ver)
-}
-
-func constructGroupIdKey(id string) string {
-	return fmt.Sprintf(groupId, id)
 }
 
 func constructGroupLabel(id, ver, index string, config map[string]string) string {
