@@ -31,14 +31,16 @@ func main() {
 
 	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
 	router.HandleFunc("/config/{id}/", server.getConfigVersionsHandler).Methods("GET")
-	router.HandleFunc("/config/{id}", server.putNewVersion).Methods("POST")
-	router.HandleFunc("/config/{id}/{ver}", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/{ver}", server.delConfigHandler).Methods("DELETE")
+	router.HandleFunc("/config/{id}", server.putNewConfigVersion).Methods("POST")
+	router.HandleFunc("/config/{id}/{ver}/", server.getConfigHandler).Methods("GET")
+	router.HandleFunc("/config/{id}/{ver}", server.deleteConfigHandler).Methods("DELETE")
+
 	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
 	router.HandleFunc("/group/{id}", server.putNewGroupVersion).Methods("POST")
-	router.HandleFunc("/group/{id}/", server.getGroupVersionsHandler).Methods("GET")
 	router.HandleFunc("/group/{id}/{ver}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/{ver}", server.delGroupHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{ver}/", server.deleteGroupHandler).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{ver}/config/", server.getConfigFromGroup).Methods("GET")
+	router.HandleFunc("/group/{id}/{ver}/config/", server.addConfigToGroupHandler).Methods("POST")
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}

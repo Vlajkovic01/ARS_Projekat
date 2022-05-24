@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/hashicorp/consul/api"
 	"log"
 	"os"
@@ -54,7 +55,7 @@ func (cs *ConfigStore) DeleteConfig(id, ver string) (map[string]string, error) {
 		return nil, err
 	}
 
-	return map[string]string{"Deleted config": id + ver}, nil
+	return map[string]string{"Deleted": id}, nil
 }
 
 func (cs *ConfigStore) FindConfVersions(id string) ([]*Config, error) {
@@ -131,8 +132,6 @@ func (cs *ConfigStore) CreateGroup(group *Group) (*Group, error) {
 	sid, rid := generateGroupKey(group.Version)
 	group.ID = rid
 
-	log.Default().Println(sid, kv)
-
 	data, err := json.Marshal(group)
 	if err != nil {
 		return nil, err
@@ -144,34 +143,88 @@ func (cs *ConfigStore) CreateGroup(group *Group) (*Group, error) {
 		return nil, err
 	}
 
-	cids := make([]string, 0)
-	for i, config := range group.Configs {
-		cid := constructGroupLabel(rid, group.Version, i, config)
-		cids = append(cids, cid)
-		log.Default().Println(cid)
+	err = cs.CreateLabels(group.Configs, group.ID, group.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
+}
+
+func (cs *ConfigStore) CreateLabels(configs []map[string]string, id, ver string) error {
+	kv := cs.cli.KV()
+	if keys, _, err := kv.Get(constructGroupKey(id, ver), nil); err != nil || keys == nil {
+		return errors.New("Group doesn't exists")
+	}
+
+	for _, config := range configs {
+		cid := constructGroupLabel(id, ver, uuid.New().String(), config)
 		cdata, err := json.Marshal(config)
+
+		log.Default().Printf("adding new config: %q. under key %q", config, cdata)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		c := &api.KVPair{Key: cid, Value: cdata}
 		_, err = kv.Put(c, nil)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
+	return nil
+}
 
-	for _, k := range cids {
-		val, _, err := kv.List(k, nil)
-		if err != nil {
-			return nil, err
-		}
-		log.Default().Println(val)
+func (cs *ConfigStore) AddLabelsToGroup(configs []map[string]string, id, ver string) ([]map[string]string, error) {
+	kv := cs.cli.KV()
+	gr, err := cs.FindGroup(id, ver)
+	if err != nil || gr == nil {
+		return nil, err
 	}
 
-	log.Default().Println(cs.FindConfVersions(sid))
+	for _, config := range configs {
+		log.Default().Printf("%q", configs)
+		gr.Configs = append(gr.Configs, config)
+	}
 
-	return group, nil
+	data, err := json.Marshal(gr)
+	if err != nil {
+		return nil, err
+	}
+
+	sid := constructGroupKey(id, ver)
+
+	g := &api.KVPair{Key: sid, Value: data}
+	_, err = kv.Put(g, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cs.CreateLabels(configs, gr.ID, gr.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return gr.Configs, nil
+}
+
+func (cs *ConfigStore) FindLabels(id, ver, kvpairs string) ([]map[string]string, error) {
+	kv := cs.cli.KV()
+	labelkey := fmt.Sprintf(group, id, ver, kvpairs) + "/"
+	keys, _, err := kv.List(labelkey, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	configs := make([]map[string]string, len(keys))
+	for i, k := range keys {
+		var config map[string]string
+		json.Unmarshal(k.Value, &config)
+		log.Default().Printf("%q", config)
+		configs[i] = config
+	}
+
+	return configs, nil
 }
 
 func (cs *ConfigStore) FindGroup(id string, ver string) (*Group, error) {
@@ -212,40 +265,20 @@ func (cs *ConfigStore) UpdateGroupVersion(group *Group) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = cs.CreateLabels(group.Configs, group.ID, group.Version)
+	if err != nil {
+		return nil, err
+	}
+
 	return group, nil
 
 }
 
-func (cs *ConfigStore) FindGroupVersions(id string) ([]*Group, error) {
+func (cs *ConfigStore) DeleteGroup(id, ver string) error {
 	kv := cs.cli.KV()
 
-	key := constructGroupIdKey(id)
-	data, _, err := kv.List(key, nil)
-	if err != nil {
-		return nil, err
-	}
+	_, err := kv.DeleteTree(constructGroupKey(id, ver), nil)
 
-	var groups []*Group
-
-	for _, pair := range data {
-		group := &Group{}
-		err := json.Unmarshal(pair.Value, group)
-		if err != nil {
-			return nil, err
-		}
-
-		groups = append(groups, group)
-	}
-	return groups, nil
-
-}
-
-func (cs *ConfigStore) DeleteConfigGroup(id, ver string) (map[string]string, error) {
-	kv := cs.cli.KV()
-	_, err := kv.Delete(constructGroupKey(id, ver), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]string{"Deleted group": id + ver}, nil
+	return err
 }

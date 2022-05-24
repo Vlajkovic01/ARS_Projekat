@@ -2,13 +2,12 @@ create config
 
 POST localhost:8000/config/
 
-[
-    {
-        "entries": {
-            "test": "test"
-        }
+{
+    "version": "v1",
+    "entries": {
+        "k1": "value"
     }
-]
+}
 
 ===============================
 
@@ -16,60 +15,52 @@ create group
 
 POST localhost:8000/group/
 
-[
-    {
-        "entries": {
+{
+    "version": "v1",
+    "configs": [
+        {
             "test": "test"
+        },
+        {
+            "test2": "test2"
         }
-    },
-    {
-        "entries": {
-            "test1": "test1"
-        }
-    }
-]
+    ]
+}
 
 ===============================
 
-get all configs (single)
+get config with all versions
 
-GET localhost:8000/configs/
+GET localhost:8000/config/{id}/
 
 ===============================
 
-get all groups
+get group
 
-GET localhost:8000/groups/
+GET localhost:8000/group/{id}/{ver}/
 
 ===============================
 
 get single config
 
-GET localhost:8000/config/5c892b5-9828-418f-9591-d5e2e815efd9/
+GET localhost:8000/config/{id}/{ver}/
 
 ===============================
 
-get config group (configs)
+get configs from group
 
-GET localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
-
-===============================
-
-get config from group
-
-GET localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/config/5c892b5-9828-418f-9591-d5e2e815efd9/
+GET localhost:8000/group/{id}/{ver}/config/
+params for labels
 
 ===============================
 
 put new config into config group
 
-PUT localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
+POST localhost:8000/group/{id}/{version}/config/
 
 [
     {
-        "entries": {
-            "test": "put_test"
-        }
+        "test123": "test123"
     }
 ]
 
@@ -77,16 +68,41 @@ PUT localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
 
 delete single config
 
-DELETE localhost:8000/config/5c892b5-9828-418f-9591-d5e2e815efd9/
+DELETE localhost:8000/config/{id}/{ver}/
 
 ===============================
 
 delete group
 
-DELETE localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/
+DELETE localhost:8000/group/{id}/{ver}/
 
 ===============================
 
-delete config from group
+put new config version
 
-DELETE localhost:8000/group/5c892b5-9828-418f-9591-d5e2e815efd9/config/5c892b5-9828-418f-9591-d5e2e815efd9/
+POST localhost:8000/config/{id}
+
+{
+    "version": "v2",
+    "entries": {
+        "k1": "value2"
+    }
+}
+
+===============================
+
+put new group version
+
+POST localhost:8000/group/{id}
+
+{
+    "version": "v2",
+    "configs": [
+        {
+            "test88": "test88"
+        },
+        {
+            "test99": "test99"
+        }
+    ]
+}

@@ -15,7 +15,7 @@ const (
 	groupId        = "group/%s"
 	groupVer       = "group/%s/%s"
 	group          = "group/%s/%s/%s"
-	groupWithLabel = "group/%s/%s/%s/%d"
+	groupWithLabel = "group/%s/%s/%s/%s"
 )
 
 func generateConfigKey(ver string) (string, string) {
@@ -44,7 +44,7 @@ func constructGroupIdKey(id string) string {
 	return fmt.Sprintf(groupId, id)
 }
 
-func constructGroupLabel(id, ver string, index int, config map[string]string) string {
+func constructGroupLabel(id, ver, index string, config map[string]string) string {
 	keys := make([]string, 0, len(config))
 	for k := range config {
 		keys = append(keys, k)
@@ -54,7 +54,6 @@ func constructGroupLabel(id, ver string, index int, config map[string]string) st
 
 	var kvpairs string
 	for k := range keys {
-
 		kvpairs = kvpairs + fmt.Sprintf("%s=%s", keys[k], config[keys[k]]+"&")
 	}
 	kvpairs = kvpairs[:len(kvpairs)-1]

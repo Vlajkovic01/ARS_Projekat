@@ -2,12 +2,12 @@ package main
 
 import (
 	cs "ARS_Projekat/configstore"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gorilla/mux"
-	"log"
 	"mime"
 	"net/http"
+	"net/url"
 )
 
 type Service struct {
@@ -35,11 +35,10 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	config, err := ts.store.CreateConfig(rt)
-	log.Default().Println(config)
-	w.Write([]byte(config.ID))
+	renderJSON(w, config.ID)
 }
 
-func (ts *Service) putNewVersion(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) putNewConfigVersion(w http.ResponseWriter, req *http.Request) {
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	id := mux.Vars(req)["id"]
@@ -69,7 +68,7 @@ func (ts *Service) putNewVersion(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.Write([]byte(config.ID))
+	renderJSON(w, config.ID)
 }
 
 func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
@@ -117,12 +116,13 @@ func (ts *Service) createGroupHandler(w http.ResponseWriter, req *http.Request) 
 
 	group, err := ts.store.CreateGroup(rt)
 
-	w.Write([]byte(group.ID))
+	renderJSON(w, group.ID)
 }
 
 func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	ver := mux.Vars(req)["ver"]
 	id := mux.Vars(req)["id"]
+
 	task, ok := ts.store.FindGroup(id, ver)
 	if ok != nil {
 		err := errors.New("key not found")
@@ -132,18 +132,22 @@ func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
 	renderJSON(w, task)
 }
 
-func (ts *Service) getGroupVersionsHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) getConfigFromGroup(w http.ResponseWriter, req *http.Request) {
+	ver := mux.Vars(req)["ver"]
 	id := mux.Vars(req)["id"]
-	task, ok := ts.store.FindGroupVersions(id)
-	if ok != nil {
-		err := errors.New("key not found")
+
+	req.ParseForm()
+	params := url.Values.Encode(req.Form)
+	labels, err := ts.store.FindLabels(id, ver, params)
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	renderJSON(w, task)
+	renderJSON(w, labels)
 }
 
 func (ts *Service) putNewGroupVersion(w http.ResponseWriter, req *http.Request) {
+
 	contentType := req.Header.Get("Content-Type")
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	id := mux.Vars(req)["id"]
@@ -173,46 +177,46 @@ func (ts *Service) putNewGroupVersion(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	w.Write([]byte(config.ID))
+	renderJSON(w, config.ID)
 }
 
-func (ts *Service) delConfigHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *Service) addConfigToGroupHandler(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	ver := mux.Vars(r)["ver"]
+	var configs []map[string]string
+	dec := json.NewDecoder(r.Body)
+	defer r.Body.Close()
 
-	id := mux.Vars(req)["id"]
-
-	ver := mux.Vars(req)["ver"]
-
-	msg, err := ts.store.DeleteConfig(id, ver)
-
-	fmt.Println("CONFIG ", msg, err)
-
+	err := dec.Decode(&configs)
 	if err != nil {
-
-		http.Error(w, err.Error(), http.StatusBadRequest)
-
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
-	renderJSON(w, msg)
-
-}
-
-func (ts *Service) delGroupHandler(w http.ResponseWriter, req *http.Request) {
-
-	id := mux.Vars(req)["id"]
-
-	ver := mux.Vars(req)["ver"]
-
-	msg, err := ts.store.DeleteConfigGroup(id, ver)
-
-	fmt.Println("GROUP ", msg, err)
+	configs, err = ts.store.AddLabelsToGroup(configs, id, ver)
 
 	if err != nil {
-
-		http.Error(w, err.Error(), http.StatusBadRequest)
-
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 
-	renderJSON(w, msg)
+	renderJSON(w, configs)
+}
+
+func (ts *Service) deleteConfigHandler(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	ver := mux.Vars(r)["ver"]
+	_, err := ts.store.DeleteConfig(id, ver)
+	if err != nil {
+		http.Error(w, "Could not delete config", http.StatusBadRequest)
+	}
+}
+
+func (ts *Service) deleteGroupHandler(writer http.ResponseWriter, request *http.Request) {
+	id := mux.Vars(request)["id"]
+	ver := mux.Vars(request)["ver"]
+	err := ts.store.DeleteGroup(id, ver)
+	if err != nil {
+		http.Error(writer, "Could not delete group", http.StatusBadRequest)
+	}
 }
