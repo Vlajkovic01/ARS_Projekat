@@ -196,7 +196,7 @@ func (ts *Service) addConfigToGroupHandler(w http.ResponseWriter, r *http.Reques
 	configs, err = ts.store.AddLabelsToGroup(configs, id, ver)
 
 	if err != nil {
-		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		http.Error(w, "key not found", http.StatusBadRequest)
 		return
 	}
 
