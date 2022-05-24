@@ -50,7 +50,7 @@ func (cs *ConfigStore) CreateConfig(config *Config) (*Config, error) {
 	return config, nil
 }
 
-func (cs *ConfigStore) FindConf(id string, ver string) (*Config, error) {
+func (cs *ConfigStore) FindConfig(id string, ver string) (*Config, error) {
 	kv := cs.cli.KV()
 	key := constructConfigKey(id, ver)
 	data, _, err := kv.Get(key, nil)
@@ -100,7 +100,7 @@ func (cs *ConfigStore) UpdateConfigVersion(config *Config) (*Config, error) {
 		return nil, err
 	}
 
-	_, err = cs.FindConf(config.ID, config.Version)
+	_, err = cs.FindConfig(config.ID, config.Version)
 
 	//Does exist
 	if err == nil {

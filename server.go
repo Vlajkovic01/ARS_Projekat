@@ -74,7 +74,7 @@ func (ts *Service) putNewConfigVersion(w http.ResponseWriter, req *http.Request)
 func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
 	ver := mux.Vars(req)["ver"]
 	id := mux.Vars(req)["id"]
-	task, ok := ts.store.FindConf(id, ver)
+	task, ok := ts.store.FindConfig(id, ver)
 	if ok != nil {
 		err := errors.New("key not found")
 		http.Error(w, err.Error(), http.StatusNotFound)
