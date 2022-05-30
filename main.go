@@ -29,18 +29,20 @@ func main() {
 		store: store,
 	}
 
-	router.HandleFunc("/config/", server.createConfigHandler).Methods("POST")
-	router.HandleFunc("/config/{id}/", server.getConfigVersionsHandler).Methods("GET")
-	router.HandleFunc("/config/{id}", server.putNewConfigVersion).Methods("POST")
-	router.HandleFunc("/config/{id}/{ver}/", server.getConfigHandler).Methods("GET")
-	router.HandleFunc("/config/{id}/{ver}", server.deleteConfigHandler).Methods("DELETE")
+	router.HandleFunc("/config/", countPostConfig(server.createConfigHandler)).Methods("POST")
+	router.HandleFunc("/config/{id}/", countGetConfigVersion(server.getConfigVersionsHandler)).Methods("GET")
+	router.HandleFunc("/config/{id}", countPostConfigVersion(server.putNewConfigVersion)).Methods("POST")
+	router.HandleFunc("/config/{id}/{ver}/", countGetConfig(server.getConfigHandler)).Methods("GET")
+	router.HandleFunc("/config/{id}/{ver}", countDeleteConfig(server.deleteConfigHandler)).Methods("DELETE")
 
-	router.HandleFunc("/group/", server.createGroupHandler).Methods("POST")
-	router.HandleFunc("/group/{id}", server.putNewGroupVersion).Methods("POST")
-	router.HandleFunc("/group/{id}/{ver}/", server.getGroupHandler).Methods("GET")
-	router.HandleFunc("/group/{id}/{ver}/", server.deleteGroupHandler).Methods("DELETE")
-	router.HandleFunc("/group/{id}/{ver}/config/", server.getConfigFromGroup).Methods("GET")
-	router.HandleFunc("/group/{id}/{ver}/config/", server.addConfigToGroupHandler).Methods("POST")
+	router.HandleFunc("/group/", countPostGroup(server.createGroupHandler)).Methods("POST")
+	router.HandleFunc("/group/{id}", countPostGroupVersion(server.putNewGroupVersion)).Methods("POST")
+	router.HandleFunc("/group/{id}/{ver}/", countGetGroup(server.getGroupHandler)).Methods("GET")
+	router.HandleFunc("/group/{id}/{ver}/", countDeleteGroup(server.deleteGroupHandler)).Methods("DELETE")
+	router.HandleFunc("/group/{id}/{ver}/config/", countGetGroupConfigs(server.getConfigFromGroup)).Methods("GET")
+	router.HandleFunc("/group/{id}/{ver}/config/", countAddGroupConfig(server.addConfigToGroupHandler)).Methods("POST")
+
+	router.Path("/metrics").Handler(metricsHandler())
 
 	// start server
 	srv := &http.Server{Addr: "0.0.0.0:8000", Handler: router}
