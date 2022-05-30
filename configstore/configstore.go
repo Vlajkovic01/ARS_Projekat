@@ -281,3 +281,35 @@ func (cs *ConfigStore) AddLabelsToGroup(configs []map[string]string, id, ver str
 
 	return gr.Configs, nil
 }
+
+func (cs *ConfigStore) SaveRequestId() string {
+
+	kv := cs.cli.KV()
+
+	reqId := generateRequestId()
+
+	i := &api.KVPair{Key: reqId, Value: nil}
+
+	_, err := kv.Put(i, nil)
+
+	if err != nil {
+		return "error"
+	}
+
+	return reqId
+}
+
+func (cs *ConfigStore) FindRequestId(requestId string) bool {
+
+	kv := cs.cli.KV()
+
+	key, _, err := kv.Get(requestId, nil)
+
+	fmt.Println(key)
+
+	if err != nil || key == nil {
+		return false
+	}
+
+	return true
+}

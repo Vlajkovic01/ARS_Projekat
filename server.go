@@ -15,7 +15,10 @@ type Service struct {
 }
 
 func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request) {
+
 	contentType := req.Header.Get("Content-Type")
+	requestId := req.Header.Get("x-idempotency-key")
+
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -34,12 +37,28 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
+	if ts.store.FindRequestId(requestId) == true {
+		http.Error(w, "Request has been already sent", http.StatusBadRequest)
+		return
+	}
+
 	config, err := ts.store.CreateConfig(rt)
-	renderJSON(w, config.ID)
+
+	reqId := ""
+
+	if err == nil {
+		reqId = ts.store.SaveRequestId()
+	}
+
+	w.Write([]byte("Config ID: " + config.ID))
+	w.Write([]byte("\n\nIdempotence key: " + reqId))
 }
 
 func (ts *Service) putNewConfigVersion(w http.ResponseWriter, req *http.Request) {
+
 	contentType := req.Header.Get("Content-Type")
+	requestId := req.Header.Get("x-idempotency-key")
+
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	id := mux.Vars(req)["id"]
 
@@ -61,6 +80,11 @@ func (ts *Service) putNewConfigVersion(w http.ResponseWriter, req *http.Request)
 	}
 
 	rt.ID = id
+	if ts.store.FindRequestId(requestId) == true {
+		http.Error(w, "Request has been already sent", http.StatusBadRequest)
+		return
+	}
+
 	config, err := ts.store.UpdateConfigVersion(rt)
 
 	if err != nil {
@@ -68,7 +92,14 @@ func (ts *Service) putNewConfigVersion(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	renderJSON(w, config.ID)
+	reqId := ""
+
+	if err == nil {
+		reqId = ts.store.SaveRequestId()
+	}
+
+	w.Write([]byte("Config ID: " + config.ID))
+	w.Write([]byte("\n\nIdempotence key: " + reqId))
 }
 
 func (ts *Service) getConfigHandler(w http.ResponseWriter, req *http.Request) {
@@ -95,7 +126,10 @@ func (ts *Service) getConfigVersionsHandler(w http.ResponseWriter, req *http.Req
 }
 
 func (ts *Service) createGroupHandler(w http.ResponseWriter, req *http.Request) {
+
 	contentType := req.Header.Get("Content-Type")
+	requestId := req.Header.Get("x-idempotency-key")
+
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -114,9 +148,21 @@ func (ts *Service) createGroupHandler(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if ts.store.FindRequestId(requestId) == true {
+		http.Error(w, "Request has been already sent", http.StatusBadRequest)
+		return
+	}
+
 	group, err := ts.store.CreateGroup(rt)
 
-	renderJSON(w, group.ID)
+	reqId := ""
+
+	if err == nil {
+		reqId = ts.store.SaveRequestId()
+	}
+
+	w.Write([]byte("Group ID: " + group.ID))
+	w.Write([]byte("\n\nIdempotence key: " + reqId))
 }
 
 func (ts *Service) getGroupHandler(w http.ResponseWriter, req *http.Request) {
@@ -149,6 +195,8 @@ func (ts *Service) getConfigFromGroup(w http.ResponseWriter, req *http.Request) 
 func (ts *Service) putNewGroupVersion(w http.ResponseWriter, req *http.Request) {
 
 	contentType := req.Header.Get("Content-Type")
+	requestId := req.Header.Get("x-idempotency-key")
+
 	mediatype, _, err := mime.ParseMediaType(contentType)
 	id := mux.Vars(req)["id"]
 
@@ -169,18 +217,33 @@ func (ts *Service) putNewGroupVersion(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
+	if ts.store.FindRequestId(requestId) == true {
+		http.Error(w, "Request has been already sent", http.StatusBadRequest)
+		return
+	}
+
 	rt.ID = id
 	config, err := ts.store.UpdateGroupVersion(rt)
+
+	reqId := ""
+
+	if err == nil {
+		reqId = ts.store.SaveRequestId()
+	}
 
 	if err != nil {
 		http.Error(w, "Given config version already exists! ", http.StatusBadRequest)
 		return
 	}
 
-	renderJSON(w, config.ID)
+	w.Write([]byte("Group ID: " + config.ID))
+	w.Write([]byte("\n\nIdempotence key: " + reqId))
 }
 
 func (ts *Service) addConfigToGroupHandler(w http.ResponseWriter, r *http.Request) {
+
+	requestId := r.Header.Get("x-idempotency-key")
+
 	id := mux.Vars(r)["id"]
 	ver := mux.Vars(r)["ver"]
 	var configs []map[string]string
@@ -200,7 +263,17 @@ func (ts *Service) addConfigToGroupHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	if ts.store.FindRequestId(requestId) == true {
+
+		http.Error(w, "Request has been already sent", http.StatusBadRequest)
+
+		return
+	}
+
+	reqId := ts.store.SaveRequestId()
+
 	renderJSON(w, configs)
+	w.Write([]byte("\n\nIdempotence key: " + reqId))
 }
 
 func (ts *Service) deleteConfigHandler(w http.ResponseWriter, r *http.Request) {

@@ -39,6 +39,7 @@ func renderJSON(w http.ResponseWriter, v interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
+	//w.Write([]byte("Idempotence key: " + id))
 }
 
 func createId() string {

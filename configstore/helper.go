@@ -13,6 +13,8 @@ const (
 	groupVer       = "group/%s/%s"
 	group          = "group/%s/%s/%s"
 	groupWithLabel = "group/%s/%s/%s/%s"
+
+	requestId = "request/%s"
 )
 
 func generateConfigKey(ver string) (string, string) {
@@ -51,4 +53,11 @@ func constructGroupLabel(id, ver, index string, config map[string]string) string
 	}
 	kvpairs = kvpairs[:len(kvpairs)-1]
 	return fmt.Sprintf(groupWithLabel, id, ver, kvpairs, index)
+}
+
+func generateRequestId() string {
+
+	rid := uuid.New().String()
+
+	return rid
 }
