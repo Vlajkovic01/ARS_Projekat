@@ -2,3 +2,5 @@ docker build --tag latest .
 docker run -p 8000:8000 latest
 
 docker compose up --build
+
+Prometheus UI on: localhost:9090

@@ -38,7 +38,6 @@ func (ts *Service) createConfigHandler(w http.ResponseWriter, req *http.Request)
 	}
 
 	if ts.store.FindRequestId(requestId) == true {
-		http.Error(w, "Request has been already sent", http.StatusBadRequest)
 		return
 	}
 
@@ -81,7 +80,6 @@ func (ts *Service) putNewConfigVersion(w http.ResponseWriter, req *http.Request)
 
 	rt.ID = id
 	if ts.store.FindRequestId(requestId) == true {
-		http.Error(w, "Request has been already sent", http.StatusBadRequest)
 		return
 	}
 
@@ -149,7 +147,6 @@ func (ts *Service) createGroupHandler(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if ts.store.FindRequestId(requestId) == true {
-		http.Error(w, "Request has been already sent", http.StatusBadRequest)
 		return
 	}
 
@@ -218,7 +215,6 @@ func (ts *Service) putNewGroupVersion(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if ts.store.FindRequestId(requestId) == true {
-		http.Error(w, "Request has been already sent", http.StatusBadRequest)
 		return
 	}
 
@@ -264,9 +260,6 @@ func (ts *Service) addConfigToGroupHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	if ts.store.FindRequestId(requestId) == true {
-
-		http.Error(w, "Request has been already sent", http.StatusBadRequest)
-
 		return
 	}
 
