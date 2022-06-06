@@ -1,7 +1,6 @@
 package main
 
 import (
-	cs "ARS_Projekat/configstore"
 	"context"
 	"github.com/gorilla/mux"
 	"log"
@@ -19,14 +18,10 @@ func main() {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 
-	store, err := cs.New()
-
+	server, err := NewConfigServer()
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	server := Service{
-		store: store,
+		return
 	}
 
 	router.HandleFunc("/config/", countPostConfig(server.createConfigHandler)).Methods("POST")
