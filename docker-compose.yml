@@ -9,6 +9,15 @@ services:
     command: "agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0"
     volumes:
       - ./consul/:/consul/data
+  tracing:
+    image: jaegertracing/all-in-one
+    container_name: jaeger
+    ports:
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
   app:
     build: .
     restart: always
@@ -19,6 +28,12 @@ services:
     environment:
       - DB=consul
       - DBPORT=8500
+      - JAEGER_SERVICE_NAME=posts
+      - JAEGER_AGENT_HOST=tracing
+      - JAEGER_AGENT_PORT=6831
+      - JAEGER_SAMPLER_MANAGER_HOST_PORT=jaeger:5778
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
   prometheus:
     image: prom/prometheus:latest
     ports:
