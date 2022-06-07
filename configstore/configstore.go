@@ -60,7 +60,7 @@ func (cs *ConfigStore) CreateConfig(ctx context.Context, config *Config) (*Confi
 }
 
 func (cs *ConfigStore) FindConfig(ctx context.Context, id string, ver string) (*Config, error) {
-	span := tracer.StartSpanFromContext(ctx, "FindConf")
+	span := tracer.StartSpanFromContext(ctx, "FindConfig")
 	defer span.Finish()
 
 	childCtx := tracer.ContextWithSpan(ctx, span)
@@ -85,7 +85,7 @@ func (cs *ConfigStore) FindConfig(ctx context.Context, id string, ver string) (*
 }
 
 func (cs *ConfigStore) FindConfVersions(ctx context.Context, id string) ([]*Config, error) {
-	span := tracer.StartSpanFromContext(ctx, "FindConfVersions")
+	span := tracer.StartSpanFromContext(ctx, "FindConfigVersions")
 	defer span.Finish()
 
 	childCtx := tracer.ContextWithSpan(ctx, span)
