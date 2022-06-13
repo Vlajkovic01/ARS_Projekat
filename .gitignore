@@ -15,5 +15,3 @@
 # vendor/
 
 .idea
-
-docker-compose.yml
