@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	// test
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
